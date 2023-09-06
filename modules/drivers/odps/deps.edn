@@ -2,4 +2,4 @@
  ["src" "resources"]
 
  :deps
- {com.aliyun.odps/odps-jdbc {:mvn/version "3.3.6"}}}
+ {com.aliyun.odps/odps-jdbc {:local/root "lib/odps-jdbc-3.3.6-jar-with-dependencies.jar"}}}
