@@ -66,7 +66,7 @@
       :as   details}]
   (merge {:classname   "com.aliyun.odps.jdbc.OdpsDriver"
      :subprotocol "odps"
-     :subname     (str host dbname "&charset=UTF-8")}
+     :subname     (str host)}
     (dissoc details :host :dbname)))
 
 (defn keyword->qualified-name
