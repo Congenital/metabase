@@ -8,7 +8,7 @@
   2. clone 代码到 modules/drivers 目录
 		<br/>
     ```
-    git clone git@github.com:Congenital/metabase-odps-driver.git
+    git clone git@github.com:Congenital/metabase-odps-driver.git odps
     ```
   3. 编译odps驱动观测编译效果
 		<br/>
