@@ -1,5 +1,6 @@
 (ns metabase.api.database
   "/api/database endpoints."
+  (:import [java.lang Integer])
   (:require
    [clojure.string :as str]
    [compojure.core :refer [DELETE GET POST PUT]]
@@ -47,6 +48,7 @@
    [metabase.util.schema :as su]
    [schema.core :as s]
    [toucan.db :as db]
+   [metabase.config :as config]
    [toucan2.core :as t2]))
 
 (set! *warn-on-reflection* true)
@@ -663,40 +665,55 @@
 
 ;;; ----------------------------------------------- POST /api/database -----------------------------------------------
 
+(defn replace-env-params [params]
+	(def new-params params)
+	(doseq [key (keys params)]
+		(def value (key params))
+		(if (and (str/starts-with? value "${") (str/ends-with? value "}"))
+			(def new-params (assoc new-params key (config/config-str (keyword (subs value 2 (- (count value) 1))))))))
+	new-params)
+
 (defn test-database-connection
   "Try out the connection details for a database and useful error message if connection fails, returns `nil` if
    connection succeeds."
-  [engine {:keys [host port] :as details}, & {:keys [log-exception]
+  [engine {:keys [user password host port] :as details}, & {:keys [log-exception]
                                               :or   {log-exception true}}]
-  {:pre [(some? engine)]}
-  (let [engine  (keyword engine)
-        details (assoc details :engine engine)]
-    (try
-      (cond
-        (driver.u/can-connect-with-details? engine details :throw-exceptions)
-        nil
+	(def params (replace-env-params {:user user :password password :host host :port port}))
+	(let [details (merge details params)
+				host (:host params)
+				port (Integer/parseInt (:port params))
+				user (:user params)
+				password (:password params)]
+		{:pre [(some? engine)]}
+		(println "details: " details)
+		(let [engine  (keyword engine)
+					details (assoc details :engine engine)]
+			(try
+				(cond
+					(driver.u/can-connect-with-details? engine details :throw-exceptions)
+					nil
 
-        (and host port (u/host-port-up? host port))
-        {:message (tru "Connection to ''{0}:{1}'' successful, but could not connect to DB."
-                       host port)}
+					(and host port (u/host-port-up? host port))
+					{:message (tru "Connection to ''{0}:{1}'' successful, but could not connect to DB."
+												 host port)}
 
-        (and host (u/host-up? host))
-        {:message (tru "Connection to host ''{0}'' successful, but port {1} is invalid."
-                       host port)
-         :errors  {:port (deferred-tru "check your port settings")}}
+					(and host (u/host-up? host))
+					{:message (tru "Connection to host ''{0}'' successful, but port {1} is invalid."
+												 host port)
+					 :errors  {:port (deferred-tru "check your port settings")}}
 
-        host
-        {:message (tru "Host ''{0}'' is not reachable" host)
-         :errors  {:host (deferred-tru "check your host settings")}}
+					host
+					{:message (tru "Host ''{0}'' is not reachable" host)
+					 :errors  {:host (deferred-tru "check your host settings")}}
 
-        :else
-        {:message (tru "Unable to connect to database.")})
-      (catch Throwable e
-        (when (and log-exception (not (some->> e ex-cause ex-data ::driver/can-connect-message?)))
-          (log/error e (trs "Cannot connect to Database")))
-        (if (-> e ex-data :message)
-          (ex-data e)
-          {:message (.getMessage e)})))))
+					:else
+					{:message (tru "Unable to connect to database.")})
+				(catch Throwable e
+					(when (and log-exception (not (some->> e ex-cause ex-data ::driver/can-connect-message?)))
+						(log/error e (trs "Cannot connect to Database")))
+					(if (-> e ex-data :message)
+						(ex-data e)
+						{:message (.getMessage e)}))))))
 
 ;; TODO - Just make `:ssl` a `feature`
 (defn- supports-ssl?
@@ -717,7 +734,7 @@
   [engine :- DBEngineString, details :- su/Map]
   (let [;; Try SSL first if SSL is supported and not already enabled
         ;; If not successful or not applicable, details-with-ssl will be nil
-        details-with-ssl (assoc details :ssl true)
+        details-with-ssl (assoc details :ssl false)
         details-with-ssl (when (and (supports-ssl? (keyword engine))
                                     (not (true? (:ssl details)))
                                     (nil? (test-database-connection engine details-with-ssl :log-exception false)))
@@ -747,8 +764,10 @@
     (api/check (premium-features/enable-cache-granular-controls?)
                [402 (tru (str "The cache TTL database setting is only enabled if you have a premium token with the "
                               "cache granular controls feature."))]))
+	(def params (replace-env-params details))
   (let [is-full-sync?    (or (nil? is_full_sync)
                              (boolean is_full_sync))
+				details (merge details params)
         details-or-error (test-connection-details engine details)
         valid?           (not= (:valid details-or-error) false)]
     (if valid?
@@ -790,7 +809,9 @@
   {engine  DBEngineString
    details su/Map}
   (api/check-superuser)
-  (let [details-or-error (test-connection-details engine details)]
+	(def params (replace-env-params details))
+  (let [details (merge details params)
+				details-or-error (test-connection-details engine details)]
     {:valid (not (false? (:valid details-or-error)))}))
 
 

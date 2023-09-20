@@ -34,8 +34,7 @@
   "Map of the db port details field, useful for `connection-properties` implementations. Implementations should assoc a
   `:placeholder` key."
   {:name         "port"
-   :display-name (deferred-tru "Port")
-   :type         :integer})
+   :display-name (deferred-tru "Port")})
 
 (def default-user-details
   "Map of the db user details field, useful for `connection-properties` implementations"
@@ -48,7 +47,6 @@
   "Map of the db password details field, useful for `connection-properties` implementations"
   {:name         "password"
    :display-name (deferred-tru "Password")
-   :type         :password
    :placeholder  "••••••••"})
 
 (def default-dbname-details
