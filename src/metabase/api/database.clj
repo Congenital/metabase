@@ -669,8 +669,9 @@
 	(def new-params params)
 	(doseq [key (keys params)]
 		(def value (key params))
-		(if (and (str/starts-with? value "${") (str/ends-with? value "}"))
-			(def new-params (assoc new-params key (config/config-str (keyword (subs value 2 (- (count value) 1))))))))
+		(if (not (= value nil))
+			(if (and (str/starts-with? value "${") (str/ends-with? value "}"))
+				(def new-params (assoc new-params key (config/config-str (keyword (subs value 2 (- (count value) 1)))))))))
 	new-params)
 
 (defn test-database-connection
@@ -681,7 +682,7 @@
 	(def params (replace-env-params {:user user :password password :host host :port port}))
 	(let [details (merge details params)
 				host (:host params)
-				port (Integer/parseInt (:port params))
+				port (Integer/parseInt (if (= nil (:port params)) "0" (:port params)))
 				user (:user params)
 				password (:password params)]
 		{:pre [(some? engine)]}
