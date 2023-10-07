@@ -124,11 +124,11 @@
     :mb-db-in-memory      (config/config-bool :mb-db-in-memory)
     :mb-db-file           (config/config-str :mb-db-file)
     :mb-db-connection-uri (config/config-str :mb-db-connection-uri)
-    :mb-db-host           (config/config-str :mb-db-host)
-    :mb-db-port           (config/config-int :mb-db-port)
+    :mb-db-host           (config/config-str :mysql-host-tapsdkbimysql)
+    :mb-db-port           (config/config-int :mysql-port-tapsdkbimysql)
     :mb-db-dbname         (config/config-str :mb-db-dbname)
-    :mb-db-user           (config/config-str :mb-db-user)
-    :mb-db-pass           (config/config-str :mb-db-pass)}
+    :mb-db-user           (config/config-str :mysql-admin-user-tapsdkbimysql)
+    :mb-db-pass           (config/config-str :mysql-admin-password-tapsdkbimysql)}
    (env-defaults db-type)))
 
 (def env
