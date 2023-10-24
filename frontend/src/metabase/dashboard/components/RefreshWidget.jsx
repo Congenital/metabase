@@ -16,6 +16,7 @@ import {
 
 const OPTIONS = [
   { name: t`Off`, period: null },
+  { name: t`伪实时(10s)`, period: 10 },
   { name: t`1 minute`, period: 1 * 60 },
   { name: t`5 minutes`, period: 5 * 60 },
   { name: t`10 minutes`, period: 10 * 60 },
